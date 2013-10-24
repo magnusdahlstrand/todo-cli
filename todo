@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+dir=$(pwd)
+scriptname=$(basename "$0")
+
+error() {
+  case "$1" in
+    need_copy )
+      message='The command needs copy'
+      code=3
+      ;;
+  esac
+  echo "$message" 1>&2
+  exit $code
+}
+
+usage="usage: $scriptname [<command>|todo]"
+show_help() {
+  echo $usage
+  cat << EOF
+
+Commands:
+   new    Create new todo
+   rm     Remove todo
+   done   Tick off todo
+EOF
+}
+
+root=$(git rev-parse --show-toplevel 2> /dev/null)
+if [[ $? != 0 ]]; then
+  root="$dir"
+fi
+
+echo $root
+
+new_todo() {
+  if [[ -z "$@" ]]; then
+    error need_copy
+  fi
+  echo "New TODO: $@"
+}
+
+list_todos() {
+  echo 'list todos'
+}
+
+archive_todo() {
+  echo 'remove todo'
+}
+
+tick_todo() {
+  echo 'tick off todo'
+}
+
+case "$1" in
+  --help )
+      show_help
+    ;;
+  + )
+      shift
+      new_todo $@
+    ;;
+  ? )
+      shift
+      list_todos $@
+    ;;
+  - )
+      shift
+      archive_todo $@
+    ;;
+  = )
+      shift
+      tick_todo $@
+    ;;
+  * )
+      new_todo $@
+esac
+
+
+
+# if [[ -z "$0" ]]; then
+#   echo $usage
+# fi
+# if [[ "$1" == "--help" ]]; then
+#   show_help
+# elif [[ "$0" == "new" ]]; then
+#   shift
+#   new_todo "$@"
+# fi
