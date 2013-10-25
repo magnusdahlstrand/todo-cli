@@ -3,6 +3,14 @@
 dir=$(pwd)
 scriptname=$(basename "$0")
 
+root=$(git rev-parse --show-toplevel 2> /dev/null)
+if [[ $? != 0 ]]; then
+  root="$dir"
+fi
+export GIT_DIR="$root/.todo"
+
+
+# Helper functions
 error() {
   case "$1" in
     need_copy )
@@ -14,6 +22,12 @@ error() {
   exit $code
 }
 
+is_setup() {
+  [[ -d $root/.todo ]]
+}
+
+
+# UI
 usage="usage: $scriptname [<command>|todo]"
 show_help() {
   echo $usage
@@ -26,22 +40,22 @@ Commands:
 EOF
 }
 
-root=$(git rev-parse --show-toplevel 2> /dev/null)
-if [[ $? != 0 ]]; then
-  root="$dir"
-fi
-
-echo $root
+setup() {
+  git init --quiet --bare
+  git update-ref refs/heads/todos $(echo 'TODO' | git commit-tree $(git hash-object -t tree /dev/null))
+}
 
 new_todo() {
   if [[ -z "$@" ]]; then
     error need_copy
   fi
   echo "New TODO: $@"
+  git update-ref refs/heads/todos $(echo "$@" | git commit-tree $(git hash-object -t tree /dev/null) -p todos)
 }
 
 list_todos() {
   echo 'list todos'
+  git log --pretty=format:'%h %s' todos
 }
 
 archive_todo() {
@@ -72,18 +86,13 @@ case "$1" in
       shift
       tick_todo $@
     ;;
+  init )
+      shift
+      setup $@
+      if is_setup; then
+        echo "todo has been initialized in $GIT_DIR"
+      fi
+    ;;
   * )
       new_todo $@
 esac
-
-
-
-# if [[ -z "$0" ]]; then
-#   echo $usage
-# fi
-# if [[ "$1" == "--help" ]]; then
-#   show_help
-# elif [[ "$0" == "new" ]]; then
-#   shift
-#   new_todo "$@"
-# fi
