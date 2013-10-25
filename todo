@@ -17,6 +17,14 @@ error() {
       message='The command needs copy'
       code=3
       ;;
+    not_setup )
+      message='Todo not setup. Please run `todo init`'
+      code=2
+      ;;
+    need_todo_id )
+      message='You need to provide a todo #'
+      code=4
+      ;;
   esac
   echo "$message" 1>&2
   exit $code
@@ -24,6 +32,21 @@ error() {
 
 is_setup() {
   [[ -d $root/.todo ]]
+}
+
+show() {
+  format=$1
+  shift
+  git log --abbrev=4 --pretty=format:"$format" $@
+}
+show_as_done() {
+  show "%C(green)☑%C(reset)%C(auto) %s" $@
+}
+show_as_not_done() {
+  show "%C(red)☐%C(reset)%C(auto) %s" $@
+}
+show_with_id() {
+  show "%C(auto)%h %s" $@
 }
 
 
@@ -42,24 +65,28 @@ EOF
 
 setup() {
   git init --quiet --bare
-  git update-ref refs/heads/todos $(echo 'TODO' | git commit-tree $(git hash-object -t tree /dev/null))
+  git update-ref refs/heads/root $(echo 'TODO' | git commit-tree $(git hash-object -t tree /dev/null))
+  git update-ref refs/heads/todos root
 }
 
 new_todo() {
   if [[ -z "$@" ]]; then
     error need_copy
   fi
-  echo "New TODO: $@"
-  git update-ref refs/heads/todos $(echo "$@" | git commit-tree $(git hash-object -t tree /dev/null) -p todos)
+  new_todo_sha=$(echo "$@" | git commit-tree $(git hash-object -t tree /dev/null) -p todos)
+  git update-ref refs/heads/todos $new_todo_sha
+  show_as_not_done $new_todo_sha^..$new_todo_sha
 }
 
 list_todos() {
-  echo 'list todos'
-  git log --pretty=format:'%h %s' todos
+  show_with_id root..todos
 }
 
 archive_todo() {
-  echo 'remove todo'
+  if [[ -z "$1" ]]; then
+    error need_todo_id
+  fi
+  show_as_done $1^..$1
 }
 
 tick_todo() {
@@ -70,29 +97,33 @@ case "$1" in
   --help )
       show_help
     ;;
-  + )
-      shift
-      new_todo $@
-    ;;
-  ? )
-      shift
-      list_todos $@
-    ;;
-  - )
-      shift
-      archive_todo $@
-    ;;
-  = )
-      shift
-      tick_todo $@
-    ;;
   init )
       shift
       setup $@
-      if is_setup; then
-        echo "todo has been initialized in $GIT_DIR"
-      fi
+      echo "todo has been initialized in $GIT_DIR"
     ;;
   * )
-      new_todo $@
+    if ! is_setup; then
+      error not_setup
+    fi
+    case "$1" in
+      + )
+          shift
+          new_todo $@
+        ;;
+      \? )
+          shift
+          list_todos $@
+        ;;
+      - )
+          shift
+          archive_todo $@
+        ;;
+      = )
+          shift
+          tick_todo $@
+        ;;
+      * )
+          new_todo $@
+    esac
 esac
