@@ -102,6 +102,10 @@ case "$1" in
       setup $@
       echo "todo has been initialized in $GIT_DIR"
     ;;
+  git )
+      shift
+      git "$@"
+    ;;
   * )
     if ! is_setup; then
       error not_setup
