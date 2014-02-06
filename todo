@@ -40,13 +40,10 @@ show() {
   git log --abbrev=4 --pretty=format:"$format" $@
 }
 show_as_done() {
-  show "%C(green)%cn%C(reset)%C(auto) %s" $@
+  show "%h %C(green)%cn%C(reset)%C(auto) %s" $@
 }
 show_as_not_done() {
-  show "%C(red)%cn%C(reset)%C(auto) %s" $@
-}
-show_with_id() {
-  show "%C(auto)%h %cn %s" $@
+  show "%h %C(red)%cn%C(reset)%C(auto) %s" $@
 }
 
 
@@ -80,7 +77,10 @@ new_todo() {
 }
 
 list_todos() {
-  show_with_id root..todos
+  show_as_not_done root..todos
+}
+list_ticked() {
+  show_as_done root..ticked
 }
 
 tick_todo() {
@@ -124,6 +124,11 @@ case "$1" in
       \? )
           shift
           list_todos $@
+        ;;
+      \?\? )
+          shift
+          list_todos $@
+          list_ticked $@
         ;;
       = )
           shift
