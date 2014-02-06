@@ -67,6 +67,7 @@ setup() {
   git init --quiet --bare
   git update-ref refs/heads/root $(echo 'TODO' | git commit-tree $(git hash-object -t tree /dev/null))
   git update-ref refs/heads/todos root
+  git update-ref refs/heads/ticked root
 }
 
 new_todo() {
@@ -90,7 +91,12 @@ archive_todo() {
 }
 
 tick_todo() {
-  echo 'tick off todo'
+  ticking_off_sha="$1"
+  new_todo_sha=$(git show --format="%s" $ticking_off_sha | GIT_COMMITTER_NAME=☑ git commit-tree $(git hash-object -t tree /dev/null) -p ticked)
+  previous_todo_sha=$(git log --max-count=1 --format="%h" $ticking_off_sha^)
+  git update-ref refs/heads/ticked $new_todo_sha
+  git update-ref refs/heads/todos $previous_todo_sha
+  show_as_done $new_todo_sha^..$new_todo_sha
 }
 
 case "$1" in
