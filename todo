@@ -97,6 +97,9 @@ case "$1" in
   --help )
       show_help
     ;;
+  help )
+      show_help
+    ;;
   init )
       shift
       setup $@
