@@ -83,15 +83,12 @@ list_todos() {
   show_with_id root..todos
 }
 
-archive_todo() {
+tick_todo() {
   if [[ -z "$1" ]]; then
     error need_todo_id
+  else
+    ticking_off_sha="$1"
   fi
-  show_as_done $1^..$1
-}
-
-tick_todo() {
-  ticking_off_sha="$1"
   new_todo_sha=$(git show --format="%s" $ticking_off_sha | GIT_COMMITTER_NAME=☑ git commit-tree $(git hash-object -t tree /dev/null) -p ticked)
   previous_todo_sha=$(git log --max-count=1 --format="%h" $ticking_off_sha^)
   git update-ref refs/heads/ticked $new_todo_sha
@@ -127,10 +124,6 @@ case "$1" in
       \? )
           shift
           list_todos $@
-        ;;
-      - )
-          shift
-          archive_todo $@
         ;;
       = )
           shift
