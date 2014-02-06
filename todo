@@ -40,13 +40,13 @@ show() {
   git log --abbrev=4 --pretty=format:"$format" $@
 }
 show_as_done() {
-  show "%C(green)☑%C(reset)%C(auto) %s" $@
+  show "%C(green)%cn%C(reset)%C(auto) %s" $@
 }
 show_as_not_done() {
-  show "%C(red)☐%C(reset)%C(auto) %s" $@
+  show "%C(red)%cn%C(reset)%C(auto) %s" $@
 }
 show_with_id() {
-  show "%C(auto)%h %s" $@
+  show "%C(auto)%h %cn %s" $@
 }
 
 
@@ -73,7 +73,7 @@ new_todo() {
   if [[ -z "$@" ]]; then
     error need_copy
   fi
-  new_todo_sha=$(echo "$@" | git commit-tree $(git hash-object -t tree /dev/null) -p todos)
+  new_todo_sha=$(echo "$@" | GIT_COMMITTER_NAME=☐ git commit-tree $(git hash-object -t tree /dev/null) -p todos)
   git update-ref refs/heads/todos $new_todo_sha
   show_as_not_done $new_todo_sha^..$new_todo_sha
 }
