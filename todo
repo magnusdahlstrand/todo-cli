@@ -54,9 +54,10 @@ show_help() {
   cat << EOF
 
 Commands:
-   new    Create new todo
-   rm     Remove todo
-   done   Tick off todo
+   +      Create new todo
+   =      Mark todo as done
+   ?      List remaining todos
+   ??     List all todos
 EOF
 }
 
