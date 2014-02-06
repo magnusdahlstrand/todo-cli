@@ -131,6 +131,10 @@ case "$1" in
           tick_todo $@
         ;;
       * )
-          new_todo $@
+          if [[ -z "$@" ]]; then
+            list_todos $@
+          else
+            new_todo $@
+          fi
     esac
 esac
