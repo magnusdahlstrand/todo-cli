@@ -21,6 +21,10 @@ error() {
       message='Todo not setup. Please run `todo init`'
       code=2
       ;;
+    already_setup )
+      message='Todo already initialized'
+      code=2
+      ;;
     need_todo_id )
       message='You need to provide a todo #'
       code=4
@@ -62,6 +66,9 @@ EOF
 }
 
 setup() {
+  if is_setup; then
+    error already_setup
+  fi
   git init --quiet --bare
   git update-ref refs/heads/root $(echo 'TODO' | git commit-tree $(git hash-object -t tree /dev/null))
   git update-ref refs/heads/todos root
