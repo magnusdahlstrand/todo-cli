@@ -44,10 +44,31 @@ show() {
   git log --abbrev=4 --pretty=format:"$format" $@
 }
 show_as_done() {
-  show "%h %C(green)%cn%C(reset)%C(auto) %s" $@
+  show "%h %C(green)☑%C(reset)%C(auto) %s" $@
 }
 show_as_not_done() {
-  show "%h %C(red)%cn%C(reset)%C(auto) %s" $@
+  show "%h %C(red)☐%C(reset)%C(auto) %s" $@
+}
+
+# Plumbing
+_new_commit_object() {
+  if [[ -z "$2" ]]; then
+    parent="root"
+    copy="$@"
+  else
+    parent="$1"
+    shift
+    copy="$@"
+  fi
+  echo $(echo "$copy" | git commit-tree $(git hash-object -t tree /dev/null) -p $parent)
+}
+_new_commit_object_at_head() {
+  head="$1"
+  shift
+  copy="$@"
+  new_co_sha=$(_new_commit_object $head $@)
+  git update-ref refs/heads/$head $new_co_sha
+  echo $new_co_sha
 }
 
 
@@ -79,8 +100,7 @@ new_todo() {
   if [[ -z "$@" ]]; then
     error need_copy
   fi
-  new_todo_sha=$(echo "$@" | GIT_COMMITTER_NAME=☐ git commit-tree $(git hash-object -t tree /dev/null) -p todos)
-  git update-ref refs/heads/todos $new_todo_sha
+  new_todo_sha=$(_new_commit_object_at_head todos $@)
   show_as_not_done $new_todo_sha^..$new_todo_sha
 }
 
