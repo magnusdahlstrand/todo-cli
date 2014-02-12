@@ -70,6 +70,22 @@ _new_commit_object_at_head() {
   git update-ref refs/heads/$head $new_co_sha
   echo $new_co_sha
 }
+_new_commit_object_at_head_from_sha() {
+  head="$1"
+  sha="$2"
+  copy=$(git log --max-count=1 --format="%h" $sha)
+}
+_remove_commit_object_from_tree() {
+  tree="$1"
+  sha_of_co_to_remove="$2"
+  sha_of_preceding_co=$(git log --max-count=1 --format="%h" $sha_of_co_to_remove^)
+  objects_to_rewrite=$(git log --pretty=format:"%s" --reverse $sha_of_co_to_remove..$tree)
+  git update-ref refs/heads/$tree $sha_of_preceding_co
+  while read todo; do
+    _new_commit_object_at_head $tree $todo > /dev/null
+  done <<< "$objects_to_rewrite"
+  echo $(git log --max-count=1 --format="%s" $sha_of_co_to_remove)
+}
 
 
 # UI
@@ -117,11 +133,9 @@ tick_todo() {
   else
     ticking_off_sha="$1"
   fi
-  new_todo_sha=$(git show --format="%s" $ticking_off_sha | GIT_COMMITTER_NAME=☑ git commit-tree $(git hash-object -t tree /dev/null) -p ticked)
-  previous_todo_sha=$(git log --max-count=1 --format="%h" $ticking_off_sha^)
-  git update-ref refs/heads/ticked $new_todo_sha
-  git update-ref refs/heads/todos $previous_todo_sha
-  show_as_done $new_todo_sha^..$new_todo_sha
+  moved_todos_copy=$(_remove_commit_object_from_tree todos $ticking_off_sha)
+  moved_todos_sha=$(_new_commit_object_at_head ticked "$moved_todos_copy")
+  show_as_done $moved_todos_sha^..$moved_todos_sha
 }
 
 case "$1" in
