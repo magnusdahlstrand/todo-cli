@@ -97,8 +97,9 @@ show_help() {
 Commands:
    +      Create new todo
    =      Mark todo as done
-   ?      List remaining todos
-   ??     List all todos
+   ?      List all todos
+   ?+     List remaining todos (also run if not sending in a command at all)
+   ?=     List done todos
 EOF
 }
 
@@ -166,10 +167,14 @@ case "$1" in
       \? )
           shift
           list_todos $@
+          list_ticked $@
         ;;
-      \?\? )
+      \?+ )
           shift
           list_todos $@
+        ;;
+      \?= )
+          shift
           list_ticked $@
         ;;
       = )
