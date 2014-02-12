@@ -109,23 +109,23 @@ setup() {
   fi
   git init --quiet --bare
   git update-ref refs/heads/root $(echo 'TODO' | git commit-tree $(git hash-object -t tree /dev/null))
-  git update-ref refs/heads/todos root
-  git update-ref refs/heads/ticked root
+  git update-ref refs/heads/☐ root
+  git update-ref refs/heads/☑ root
 }
 
 new_todo() {
   if [[ -z "$@" ]]; then
     error need_copy
   fi
-  new_todo_sha=$(_new_commit_object_at_head todos $@)
+  new_todo_sha=$(_new_commit_object_at_head ☐ $@)
   show_as_not_done $new_todo_sha^..$new_todo_sha
 }
 
 list_todos() {
-  show_as_not_done root..todos
+  show_as_not_done root..☐
 }
 list_ticked() {
-  show_as_done root..ticked
+  show_as_done root..☑
 }
 
 tick_todo() {
@@ -134,8 +134,8 @@ tick_todo() {
   else
     ticking_off_sha="$1"
   fi
-  moved_todos_copy=$(_remove_commit_object_from_tree todos $ticking_off_sha)
-  moved_todos_sha=$(_new_commit_object_at_head ticked "$moved_todos_copy")
+  moved_todos_copy=$(_remove_commit_object_from_tree ☐ $ticking_off_sha)
+  moved_todos_sha=$(_new_commit_object_at_head ☑ "$moved_todos_copy")
   show_as_done $moved_todos_sha^..$moved_todos_sha
 }
 
